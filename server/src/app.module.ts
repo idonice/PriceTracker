@@ -15,7 +15,5 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     UsersModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
