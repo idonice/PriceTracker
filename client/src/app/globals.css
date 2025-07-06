@@ -4,7 +4,13 @@
   --background: #ffffff;
   --foreground: #171717;
 }
-
+input::placeholder {
+  color: #c8c8c8;
+}
+input {
+  color: #1f2937; /* צבע הטקסט */
+  border-color: #d1d5db; /* Tailwind gray-300 */
+}
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -17,6 +23,9 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+}
+h1 {
+  color: rgb(76, 64, 64);
 }
 
 body {

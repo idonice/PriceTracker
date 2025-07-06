@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
@@ -9,19 +9,30 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    try {
-      if (createUserDto.password !== createUserDto.confirmPass) {
-        throw new Error('Passwords do not match');
-      }
-      const salt = await bcrypt.genSalt(10);
-      createUserDto.password = await bcrypt.hash(createUserDto.password, salt);
-      const newUser = new this.userModel(createUserDto);
-
-      return newUser.save();
-    } catch (error) {
-      throw new Error(error);
+  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
+    const { password, confirmPass, ...rest } = createUserDto;
+    if (password !== confirmPass) {
+      throw new BadRequestException('Passwords do not match');
     }
+    const emailExists = await this.userModel
+      .findOne({ email: createUserDto.email })
+      .exec();
+    if (emailExists) {
+      throw new BadRequestException('Email already exists');
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const newUser = new this.userModel({
+      ...rest,
+      password: hashedPassword,
+    });
+    const savedUser = await newUser.save();
+    const { password: _, ...safeUser } = savedUser.toObject();
+    return safeUser;
+  }
+
+  async findOneByEmail(email: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ email }).exec();
   }
 
   findAll() {
